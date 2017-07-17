@@ -5,9 +5,11 @@ functools32==3.2.3.post2
 matplotlib==2.0.2
 numpy==1.13.1
 pandas==0.20.3
+progressbar2==3.30.2
 pyparsing==2.2.0
 pystan==2.16.0.0
 python-dateutil==2.6.1
+python-utils==2.1.0
 pytz==2017.2
 six==1.10.0
 subprocess32==3.2.7
