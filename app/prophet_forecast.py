@@ -9,10 +9,7 @@ import pandas as pd
 import progressbar
 
 from fbprophet import Prophet
-from data_load import load
-
-
-# pd.options.mode.chained_assignment = None
+from load_data import load_train
 
 
 class suppress_stdout_stderr(object):
@@ -43,38 +40,109 @@ class suppress_stdout_stderr(object):
         # Close the null files
         os.close(self.null_fds[0])
         os.close(self.null_fds[1])
-        # Close
         os.close(self.save_fds[0])
         os.close(self.save_fds[1])
 
 
-def prophet_forecast():
-    forecasts = pd.DataFrame(columns=['Page', 'Visits'])
-    ctr = 1
-    train = load('../data/train_1.csv')
-    bar = progressbar.ProgressBar()
-    for i in bar(xrange(len(train))):
-        try:
-            series_name = train.loc[i][0]
-            series_values = pd.DataFrame(pd.to_numeric(train.loc[i][1:]))
+class ProphetForecaster(object):
+
+    def __init__(self):
+        self.train = load_train()
+
+    def forecast(self):
+        forecasts = pd.DataFrame(columns=['Page', 'Visits'])
+        ctr = 1
+        bar = progressbar.ProgressBar()
+        for i in bar(xrange(len(self.train))):
+            try:
+                series_name = self.train.loc[i][0]
+                series_values = pd.DataFrame(pd.to_numeric(self.train.loc[i][1:]))
+                series_values.reset_index(level=0, inplace=True)
+                series_values.columns = ['ds', 'y']
+                with suppress_stdout_stderr():
+                    model = Prophet().fit(series_values)
+                future = model.make_future_dataframe(periods=60, include_history=False)
+                forecast = model.predict(future)
+                forecast['Page'] = series_name + '_' + forecast['ds'].astype(str)
+                forecasts = forecasts.append(forecast[['Page', 'yhat']].rename(columns={'yhat': 'Visits'}))
+            except Exception as e:
+                with open(os.path.join('..', 'output', 'prophet_errors.txt'), 'a') as fout:
+                    fout.write('{},{}\n'.format(i, str(e)))
+            # Free memory?
+            if len(forecasts) > 1000000:
+                output_file = os.path.join('..', 'output', 'prophet_part{}.csv'.format(str(ctr).zfill(3)))
+                forecasts.to_csv(output_file, index=False)
+                ctr += 1
+                forecasts = pd.DataFrame(columns=['Page', 'Visits'])
+        output_file = os.path.join('..', 'output', 'prophet_part{}.csv'.format(str(ctr).zfill(3)))
+        forecasts.to_csv(output_file, index=False)
+
+    def forecast_errors(self):
+        # Get series that failed
+        errors = pd.read_csv(os.path.join('..', 'output', 'prophet_errors.txt'), header=None)
+        indexes = errors[0].values
+        # Build a response of zeros
+        series_name = self.train.loc[0][0]
+        series_values = pd.DataFrame(pd.to_numeric(self.train.loc[0][1:]))
+        series_values.reset_index(level=0, inplace=True)
+        series_values.columns = ['ds', 'y']
+        with suppress_stdout_stderr():
+            model = Prophet().fit(series_values)
+        future = model.make_future_dataframe(periods=60, include_history=False)
+        forecast_zeros = model.predict(future)
+        forecast_zeros['Page'] = series_name + '_' + forecast_zeros['ds'].astype(str)
+        forecast_zeros['yhat'] = 0.0
+        # Forecast previous errors
+        forecasts = pd.DataFrame(columns=['Page', 'Visits'])
+        bar = progressbar.ProgressBar()
+        for i in bar(indexes):
+            series_name = self.train.loc[i][0]
+            series_values = pd.DataFrame(pd.to_numeric(self.train.loc[i][1:]))
             series_values.reset_index(level=0, inplace=True)
             series_values.columns = ['ds', 'y']
             with suppress_stdout_stderr():
-                model = Prophet().fit(series_values)
-            future = model.make_future_dataframe(periods=60, include_history=False)
-            forecast = model.predict(future)
-            forecast['Page'] = series_name + '_' + forecast['ds'].astype(str)
+                try:
+                    if sum(series_values.fillna(0.0)['y']) < 1.0:
+                        model = None
+                    else:
+                        model = Prophet().fit(series_values)
+                except Exception:
+                    try:
+                        model = Prophet(n_changepoints=20).fit(series_values)
+                    except Exception:
+                        model = None
+            if model is not None:
+                future = model.make_future_dataframe(periods=60, include_history=False)
+                forecast = model.predict(future)
+                forecast['Page'] = series_name + '_' + forecast['ds'].astype(str)
+            else:
+                forecast = forecast_zeros.copy()
+                forecast['Page'] = series_name + '_' + forecast['ds'].astype(str)
             forecasts = forecasts.append(forecast[['Page', 'yhat']].rename(columns={'yhat': 'Visits'}))
-        except Exception as e:
-            with open('errors.txt', 'a') as fout:
-                fout.write('{},{}\n'.format(i, str(e)))
-        # Free memory?
-        if len(forecasts) > 1000000:
-            forecasts.to_csv('../data/prophet_part{}.csv'.format(str(ctr).zfill(3)), index=False)
-            ctr += 1
-            forecasts = pd.DataFrame(columns=['Page', 'Visits'])
-    forecasts.to_csv('../data/prophet_part{}.csv'.format(str(ctr).zfill(3)), index=False)
+        output_file = os.path.join('..', 'output', 'prophet_partXXX.csv')
+        forecasts.to_csv(output_file, index=False)
+
+    @staticmethod
+    def concatenate_parts():
+        parts = []
+        for root, dirs, files in os.walk(os.path.join('..', 'output')):
+            for file in files:
+                if 'prophet_part' in file:
+                    parts.append(pd.read_csv(os.path.join(root, file)))
+        forecasts = pd.concat(parts)
+        forecasts = forecasts.clip(lower=0.0)   # Replace negative forecasts with 0's
+        forecasts.to_csv(os.path.join('..', 'output', 'prophet.csv'), index=False)
+
+    @staticmethod
+    def generate_submission():
+        submission = pd.merge(
+            pd.read_csv(os.path.join('..', 'input', 'key_1.csv')),
+            pd.read_csv(os.path.join('..', 'output', 'prophet.csv')),
+            how='inner', on='Page'
+        )
+        submission.drop('Page', axis=1).to_csv(os.path.join('..', 'output', 'submission.csv'), index=False)
 
 
 if __name__ == '__main__':
-    prophet_forecast()
+    ProphetForecaster.concatenate_parts()
+    ProphetForecaster.generate_submission()
