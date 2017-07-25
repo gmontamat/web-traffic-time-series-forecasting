@@ -135,12 +135,16 @@ class ProphetForecaster(object):
         forecasts.to_csv(os.path.join('..', 'output', 'prophet.csv'), index=False)
 
     @staticmethod
-    def generate_submission():
+    def generate_submission(clip_output=True, round_output=True):
         submission = pd.merge(
             pd.read_csv(os.path.join('..', 'input', 'key_1.csv')),
-            pd.read_csv(os.path.join('..', 'output', 'prophet.csv')),
+            pd.read_csv(os.path.join('..', 'output', 'prophet_nys.csv')),
             how='inner', on='Page'
         )
+        if clip_output:
+            submission = submission.clip(lower=0.0)   # Replace negative forecasts with 0's
+        if round_output:
+            submission['Visits'] = submission['Visits'].apply(lambda x: round(x, 0))
         submission.drop('Page', axis=1).to_csv(os.path.join('..', 'output', 'submission.csv'), index=False)
 
 
