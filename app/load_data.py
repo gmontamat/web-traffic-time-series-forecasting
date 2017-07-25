@@ -13,8 +13,9 @@ def load_data(file_path):
 
 
 def load_train():
-    path = os.path.dirname(os.path.realpath(__file__))
-    return load_data(os.path.join(path, '..', 'input', 'train_1.csv'))
+    app_path = os.path.dirname(os.path.realpath(__file__))
+    return load_data(os.path.join(app_path, '..', 'input', 'train_1.csv'))
+
 
 if __name__ == '__main__':
     train = load_train()

@@ -49,6 +49,7 @@ class ProphetForecaster(object):
     def __init__(self, yearly_seasonality=True):
         self.train = load_train()
         self.yearly_seasonality = yearly_seasonality
+        self.app_path = os.path.dirname(os.path.realpath(__file__))
 
     def forecast(self):
         forecasts = pd.DataFrame(columns=['Page', 'Visits'])
@@ -67,20 +68,20 @@ class ProphetForecaster(object):
                 forecast['Page'] = series_name + '_' + forecast['ds'].astype(str)
                 forecasts = forecasts.append(forecast[['Page', 'yhat']].rename(columns={'yhat': 'Visits'}))
             except Exception as e:
-                with open(os.path.join('..', 'output', 'prophet_errors.txt'), 'a') as fout:
+                with open(os.path.join(self.app_path, '..', 'output', 'prophet_errors.txt'), 'a') as fout:
                     fout.write('{},{}\n'.format(i, str(e)))
             # Free memory?
             if len(forecasts) > 1000000:
-                output_file = os.path.join('..', 'output', 'prophet_part{}.csv'.format(str(ctr).zfill(3)))
+                output_file = os.path.join(self.app_path, '..', 'output', 'prophet_part{}.csv'.format(str(ctr).zfill(3)))
                 forecasts.to_csv(output_file, index=False)
                 ctr += 1
                 forecasts = pd.DataFrame(columns=['Page', 'Visits'])
-        output_file = os.path.join('..', 'output', 'prophet_part{}.csv'.format(str(ctr).zfill(3)))
+        output_file = os.path.join(self.app_path, '..', 'output', 'prophet_part{}.csv'.format(str(ctr).zfill(3)))
         forecasts.to_csv(output_file, index=False)
 
     def forecast_errors(self):
         # Get series that failed
-        errors = pd.read_csv(os.path.join('..', 'output', 'prophet_errors.txt'), header=None)
+        errors = pd.read_csv(os.path.join(self.app_path, '..', 'output', 'prophet_errors.txt'), header=None)
         indexes = errors[0].values
         # Build a response of zeros
         series_name = self.train.loc[0][0]
@@ -120,25 +121,25 @@ class ProphetForecaster(object):
                 forecast = forecast_zeros.copy()
                 forecast['Page'] = series_name + '_' + forecast['ds'].astype(str)
             forecasts = forecasts.append(forecast[['Page', 'yhat']].rename(columns={'yhat': 'Visits'}))
-        output_file = os.path.join('..', 'output', 'prophet_partXXX.csv')
+        output_file = os.path.join(self.app_path, '..', 'output', 'prophet_partXXX.csv')
         forecasts.to_csv(output_file, index=False)
 
     @staticmethod
     def concatenate_parts():
         parts = []
-        for root, dirs, files in os.walk(os.path.join('..', 'output')):
+        for root, dirs, files in os.walk(os.path.join(self.app_path, '..', 'output')):
             for file in files:
                 if 'prophet_part' in file:
                     parts.append(pd.read_csv(os.path.join(root, file)))
         forecasts = pd.concat(parts)
         forecasts = forecasts.clip(lower=0.0)   # Replace negative forecasts with 0's
-        forecasts.to_csv(os.path.join('..', 'output', 'prophet.csv'), index=False)
+        forecasts.to_csv(os.path.join(self.app_path, '..', 'output', 'prophet.csv'), index=False)
 
     @staticmethod
     def generate_submission(clip_output=True, round_output=True):
         submission = pd.merge(
-            pd.read_csv(os.path.join('..', 'input', 'key_1.csv')),
-            pd.read_csv(os.path.join('..', 'output', 'prophet_nys.csv')),
+            pd.read_csv(os.path.join(self.app_path, '..', 'input', 'key_1.csv')),
+            pd.read_csv(os.path.join(self.app_path, '..', 'output', 'prophet.csv')),
             how='inner', on='Page'
         )
         if clip_output:
