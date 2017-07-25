@@ -46,8 +46,9 @@ class suppress_stdout_stderr(object):
 
 class ProphetForecaster(object):
 
-    def __init__(self):
+    def __init__(self, yearly_seasonality=True):
         self.train = load_train()
+        self.yearly_seasonality = yearly_seasonality
 
     def forecast(self):
         forecasts = pd.DataFrame(columns=['Page', 'Visits'])
@@ -60,7 +61,7 @@ class ProphetForecaster(object):
                 series_values.reset_index(level=0, inplace=True)
                 series_values.columns = ['ds', 'y']
                 with suppress_stdout_stderr():
-                    model = Prophet().fit(series_values)
+                    model = Prophet(yearly_seasonality=self.yearly_seasonality).fit(series_values)
                 future = model.make_future_dataframe(periods=60, include_history=False)
                 forecast = model.predict(future)
                 forecast['Page'] = series_name + '_' + forecast['ds'].astype(str)
