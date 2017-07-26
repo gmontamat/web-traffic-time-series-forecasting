@@ -72,7 +72,9 @@ class ProphetForecaster(object):
                     fout.write('{},{}\n'.format(i, str(e)))
             # Free memory?
             if len(forecasts) > 1000000:
-                output_file = os.path.join(self.app_path, '..', 'output', 'prophet_part{}.csv'.format(str(ctr).zfill(3)))
+                output_file = os.path.join(
+                    self.app_path, '..', 'output', 'prophet_part{}.csv'.format(str(ctr).zfill(3))
+                )
                 forecasts.to_csv(output_file, index=False)
                 ctr += 1
                 forecasts = pd.DataFrame(columns=['Page', 'Visits'])
@@ -124,8 +126,7 @@ class ProphetForecaster(object):
         output_file = os.path.join(self.app_path, '..', 'output', 'prophet_partXXX.csv')
         forecasts.to_csv(output_file, index=False)
 
-    @staticmethod
-    def concatenate_parts():
+    def concatenate_parts(self):
         parts = []
         for root, dirs, files in os.walk(os.path.join(self.app_path, '..', 'output')):
             for file in files:
@@ -135,8 +136,7 @@ class ProphetForecaster(object):
         forecasts = forecasts.clip(lower=0.0)   # Replace negative forecasts with 0's
         forecasts.to_csv(os.path.join(self.app_path, '..', 'output', 'prophet.csv'), index=False)
 
-    @staticmethod
-    def generate_submission(clip_output=True, round_output=True):
+    def generate_submission(self, clip_output=True, round_output=True):
         submission = pd.merge(
             pd.read_csv(os.path.join(self.app_path, '..', 'input', 'key_1.csv')),
             pd.read_csv(os.path.join(self.app_path, '..', 'output', 'prophet.csv')),
@@ -150,5 +150,6 @@ class ProphetForecaster(object):
 
 
 if __name__ == '__main__':
-    ProphetForecaster.concatenate_parts()
-    ProphetForecaster.generate_submission()
+    pf = ProphetForecaster()
+    pf.concatenate_parts()
+    pf.generate_submission()
