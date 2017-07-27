@@ -5,11 +5,21 @@ Analysis and submissions code for the Kaggle competition. The idea is to forecas
 ## Ideas
 
 * Use Facebook's [prophet](https://github.com/facebookincubator/prophet) as a baseline
+* Use median values as a baseline
+* Remove outliers/smoothing
+* Include additional features to the data such as Google Trends
 
 ## Useful links
 
 * https://www.kaggle.com/c/web-traffic-time-series-forecasting
 * https://github.com/facebookincubator/prophet
+* Outlier detection and smoothing
+    * https://www.quora.com/How-do-I-find-the-outliers-in-time-series-data
+    * https://stats.stackexchange.com/questions/1142/simple-algorithm-for-online-outlier-detection-of-a-generic-time-series
+    * https://ocefpaf.github.io/python4oceanographers/blog/2015/03/16/outlier_detection/
+    * https://en.wikipedia.org/wiki/CUSUM
+    * https://jalobe.com/blog/tsoutliers/
+    * https://stats.stackexchange.com/questions/69874/how-to-correct-outliers-once-detected-for-time-series-data-forecasting
 
 ## Timeline
 
