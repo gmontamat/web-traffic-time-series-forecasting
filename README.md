@@ -20,6 +20,12 @@ Analysis and submissions code for the Kaggle competition. The idea is to forecas
     * https://en.wikipedia.org/wiki/CUSUM
     * https://jalobe.com/blog/tsoutliers/
     * https://stats.stackexchange.com/questions/69874/how-to-correct-outliers-once-detected-for-time-series-data-forecasting
+* Popular kernels
+    * https://www.kaggle.com/headsortails/wiki-traffic-forecast-exploration-wtf-eda
+    * https://www.kaggle.com/muonneutrino/wikipedia-traffic-data-exploration
+    * https://www.kaggle.com/opanichev/simple-model
+    * https://www.kaggle.com/cpmpml/smape-weirdness
+    * https://www.kaggle.com/clustifier/weekend-weekdays
 
 ## Timeline
 
