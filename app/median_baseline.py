@@ -48,7 +48,7 @@ def median_week():
     test[['Id', 'Visits']].to_csv(os.path.join('..', 'output', 'submission_median.csv'), index=False)
 
 
-def median_forecast(remove_outliers=False, filter_date=None):
+def median_forecast(remove_outliers=False, date_min=None, date_max=None):
     train = load_train()
     if remove_outliers:
         train = replace_outliers(train)
@@ -56,10 +56,10 @@ def median_forecast(remove_outliers=False, filter_date=None):
         train[list(train.columns[-49:]) + ['Page']], id_vars='Page', var_name='date', value_name='Visits'
     )
     train_flattened['date'] = train_flattened['date'].astype('datetime64[ns]')
-    if filter_date:
-        train_flattened = train_flattened[
-            train_flattened['date'] >= datetime.datetime.strptime(filter_date, '%Y-%m-%d')
-        ]
+    if date_min and date_max:
+        date_min = datetime.datetime.strptime(date_min, '%Y-%m-%d')
+        date_max = datetime.datetime.strptime(date_max, '%Y-%m-%d')
+        train_flattened = train_flattened[date_min <= train_flattened['date'] <= date_max]
     train_flattened['dayofweek'] = (train_flattened.date.dt.dayofweek >= 5).astype(float)
 
     test = pd.read_csv(os.path.join('..', 'input', 'key_1.csv'))
