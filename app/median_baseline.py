@@ -10,7 +10,7 @@ import os
 import numpy as np
 import pandas as pd
 
-from load_data import load_train
+from load_data import load_train, load_flat_train
 
 
 def replace_outliers(df, replace_with=np.nan):
@@ -59,7 +59,7 @@ def median_forecast(remove_outliers=False, date_min=None, date_max=None):
     if date_min and date_max:
         date_min = datetime.datetime.strptime(date_min, '%Y-%m-%d')
         date_max = datetime.datetime.strptime(date_max, '%Y-%m-%d')
-        train_flattened = train_flattened[date_min <= train_flattened['date'] <= date_max]
+        train_flattened = train_flattened[(train_flattened['date'] >= date_min) & (train_flattened['date'] <= date_max)]
     train_flattened['dayofweek'] = (train_flattened.date.dt.dayofweek >= 5).astype(float)
 
     test = pd.read_csv(os.path.join('..', 'input', 'key_1.csv'))
@@ -76,6 +76,25 @@ def median_forecast(remove_outliers=False, date_min=None, date_max=None):
     test[['Id', 'Visits']].to_csv(os.path.join('..', 'output', 'submission_median.csv'), index=False)
 
 
+def naive_last_year():
+    train_flat = load_flat_train()
+    # Filter last year values
+    date_min = datetime.datetime.strptime('2016-01-01', '%Y-%m-%d')
+    date_max = datetime.datetime.strptime('2016-03-01', '%Y-%m-%d')
+    train_flat = train_flat[(train_flat['Date'] >= date_min) & (train_flat['Date'] <= date_max)]
+    # Change dates
+    train_flat['Date'] = train_flat['Date'].apply(lambda x: x + pd.DateOffset(years=1))
+    # Save submission
+    test = pd.read_csv(os.path.join('..', 'input', 'key_1.csv'))
+    test['Date'] = test.Page.apply(lambda a: a[-10:])
+    test['Page'] = test.Page.apply(lambda a: a[:-11])
+    test['Date'] = test['Date'].astype('datetime64[ns]')
+    test = test.merge(train_flat, how='inner')
+    test.loc[test.Visits.isnull(), 'Visits'] = 0
+    test[['Id', 'Visits']].to_csv(os.path.join('..', 'output', 'submission_naively.csv'), index=False)
+
+
 if __name__ == '__main__':
     # median_week()
-    median_forecast(remove_outliers=True)
+    # median_forecast(remove_outliers=True)
+    naive_last_year()
