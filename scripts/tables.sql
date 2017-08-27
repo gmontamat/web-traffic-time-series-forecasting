@@ -14,7 +14,7 @@ CREATE TABLE train_flat_split AS (
            - 3) AS name,
          date_part('dow', "Date") AS dow,
          date_part('month', "Date") AS month,
-         "Date" AS date, "Visits" AS visits
+         "Date"::DATE AS date, "Visits" AS visits
     FROM train_flat
 );
 
@@ -24,7 +24,7 @@ CREATE TABLE train_flat_split AS (
 DROP TABLE IF EXISTS xy;
 
 CREATE TABLE xy AS (
-  SELECT page, project, access, agent, dow, month, date, visits,
+  SELECT page, project, access, agent, dow, month, date::DATE, visits,
          lag(visits, 9) OVER (PARTITION BY page ORDER BY date ASC) AS visits_lag9,
          lag(visits, 10) OVER (PARTITION BY page ORDER BY date ASC) AS visits_lag10,
          lag(visits, 11) OVER (PARTITION BY page ORDER BY date ASC) AS visits_lag11,
@@ -117,5 +117,4 @@ CREATE TABLE xy AS (
          lag(visits, 98) OVER (PARTITION BY page ORDER BY date ASC) AS visits_lag98,
          lag(visits, 99) OVER (PARTITION BY page ORDER BY date ASC) AS visits_lag99
     FROM train_flat_split
-   ORDER BY page ASC, "date" ASC
 );
