@@ -81,7 +81,10 @@ def naive_last_year():
     # Filter last year values
     date_min = datetime.datetime.strptime('2016-01-01', '%Y-%m-%d')
     date_max = datetime.datetime.strptime('2016-03-01', '%Y-%m-%d')
-    train_flat = train_flat[(train_flat['Date'] >= date_min) & (train_flat['Date'] <= date_max)]
+    date_remove = datetime.datetime.strptime('2016-02-29', '%Y-%m-%d')
+    train_flat = train_flat[
+        (train_flat['Date'] >= date_min) & (train_flat['Date'] <= date_max) & (train_flat['Date'] != date_remove)
+    ]
     # Change dates
     train_flat['Date'] = train_flat['Date'].apply(lambda x: x + pd.DateOffset(years=1))
     # Save submission
@@ -89,7 +92,7 @@ def naive_last_year():
     test['Date'] = test.Page.apply(lambda a: a[-10:])
     test['Page'] = test.Page.apply(lambda a: a[:-11])
     test['Date'] = test['Date'].astype('datetime64[ns]')
-    test = test.merge(train_flat, how='inner')
+    test = test.merge(train_flat, how='left')
     test.loc[test.Visits.isnull(), 'Visits'] = 0
     test[['Id', 'Visits']].to_csv(os.path.join('..', 'output', 'submission_naively.csv'), index=False)
 
