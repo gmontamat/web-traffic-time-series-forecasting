@@ -99,5 +99,5 @@ def naive_last_year():
 
 if __name__ == '__main__':
     # median_week()
-    # median_forecast(remove_outliers=True)
-    naive_last_year()
+    median_forecast(remove_outliers=True)
+    # naive_last_year()
