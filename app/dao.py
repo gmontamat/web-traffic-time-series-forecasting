@@ -26,11 +26,11 @@ class SimpleDao(object):
     def get_engine(self):
         return self.engine
 
-    def run_query(self, query):
+    def run_query(self, query, autocommit=True):
         with self.engine.connect() as conn:
             if self.schema != 'public':
                 conn.execute("SET search_path TO public, {}".format(self.schema))
-            conn.execute(query)
+            conn.execute(sqlalchemy.text(query).execution_options(autocommit=autocommit))
 
     def download_from_query(self, query):
         with self.engine.connect() as conn:
