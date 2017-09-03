@@ -22,6 +22,9 @@ CREATE TABLE train_flat_split AS (
 
 ALTER TABLE train_flat_split
   ADD PRIMARY KEY (page, date);
+CREATE INDEX ON train_flat_split ("date");
+CREATE INDEX ON train_flat_split (page);
+CREATE INDEX ON train_flat_split (project);
 
 
 --
@@ -31,7 +34,10 @@ ALTER TABLE train_flat_split
 DROP TABLE IF EXISTS xy;
 
 CREATE TABLE xy AS (
-  SELECT page, name, project, access, agent, dow, month, date::DATE, visits,
+  SELECT page, name, project,
+         CASE WHEN access='all-access' THEN 0 WHEN access='desktop' THEN 1 ELSE 2 END AS access,
+         CASE WHEN agent='all-agents' THEN 0 ELSE 1 END AS agent,
+         dow, month, date::DATE, visits,
          lag(visits, 1) OVER (PARTITION BY page ORDER BY date ASC) AS visits_lag1,
          lag(visits, 2) OVER (PARTITION BY page ORDER BY date ASC) AS visits_lag2,
          lag(visits, 3) OVER (PARTITION BY page ORDER BY date ASC) AS visits_lag3,
@@ -136,6 +142,10 @@ CREATE TABLE xy AS (
 
 ALTER TABLE xy
   ADD PRIMARY KEY (page, date);
+CREATE INDEX ON xy ("date");
+CREATE INDEX ON xy (page);
+CREATE INDEX ON xy (project);
+CREATE INDEX ON xy (agent);
 
 
 --
@@ -151,11 +161,12 @@ CREATE TABLE testx AS (
   )
      SELECT pages.page AS page,
             reverse(split_part(reverse(pages.page), '_', 3)) AS project,
-            reverse(split_part(reverse(pages.page), '_', 2)) AS access,
-            reverse(split_part(reverse(pages.page), '_', 1)) AS agent,
-            date_part('dow', dates.date) AS dow,
-            date_part('month', dates.date) AS month,
-            dates.date AS date,
+            CASE WHEN reverse(split_part(reverse(pages.page), '_', 2))='all-access' THEN 0
+                 WHEN reverse(split_part(reverse(pages.page), '_', 2))='desktop' THEN 1 ELSE 2 END AS access,
+            CASE WHEN reverse(split_part(reverse(pages.page), '_', 1))='all-agents' THEN 0 ELSE 1 END AS agent,
+            date_part('dow', pages.date) AS dow,
+            date_part('month', pages.date) AS month,
+            pages.date AS date,
             xy.visits AS visits_lag12,
             xy.visits_lag1 AS visits_lag13,
             xy.visits_lag2 AS visits_lag14,
@@ -236,9 +247,13 @@ CREATE TABLE testx AS (
             xy.visits_lag77 AS visits_lag89,
             xy.visits_lag78 AS visits_lag90,
             xy.visits_lag79 AS visits_lag91
-       FROM (SELECT DISTINCT page FROM train_flat_split) pages, dates
-  LEFT JOIN xy ON xy.page=pages.page AND xy.date-12=dates.date
+       FROM (SELECT page, dates.date FROM (SELECT DISTINCT page FROM train_flat_split) a, dates) pages
+  LEFT JOIN xy ON xy.page=pages.page AND xy.date=pages.date-12
 );
 
 ALTER TABLE testx
   ADD PRIMARY KEY (page, date);
+CREATE INDEX ON testx ("date");
+CREATE INDEX ON testx (page);
+CREATE INDEX ON testx (project);
+CREATE INDEX ON testx (access);
