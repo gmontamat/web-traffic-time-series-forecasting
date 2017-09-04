@@ -67,7 +67,7 @@ def build_train(min_date='2017-01-01', max_date='2017-09-01'):
     # Get all pages from train_1.csv
     pages = pd.read_csv(
         os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'input', 'train_1.csv'),
-        delimiter=',', quotechar='"', usecols=['Page']
+        delimiter=',', quotechar='"', usecols=['Page'], encoding='utf-8'
     )
     # Build new train dataset
     train = pd.DataFrame()
