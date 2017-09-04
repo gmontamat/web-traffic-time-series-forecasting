@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 """
 Retrieve page visits using Wikimedia API
 More info on: https://www.kaggle.com/c/web-traffic-time-series-forecasting/discussion/36481
@@ -27,7 +26,8 @@ def get_views(project, access, agent, name, from_date, to_date, flatten=True):
     from_date = datetime.datetime.strptime(from_date, "%Y-%m-%d").strftime("%Y%m%d00")
     to_date = datetime.datetime.strptime(to_date, "%Y-%m-%d").strftime("%Y%m%d00")
     url = API_URL.format(
-        project=project, access=access, agent=agent, name=urllib.quote_plus(name), from_date=from_date, to_date=to_date
+        project=project, access=access, agent=agent, name=urllib.quote_plus(name),
+        from_date=from_date, to_date=to_date
     )
     response = requests.get(url)
     if response.status_code != 200:
@@ -44,13 +44,14 @@ def collect_views():
     dao = SimpleDao('localhost', '5432', 'postgres', 'postgres', 'kaggle-wttsf')
     dao.run_query('DROP TABLE IF EXISTS train_flat_split_2')
     dao.run_query(
-        'CREATE TABLE train_flat_split_2 (page TEXT, project TEXT, access TEXT, agent TEXT, "name" TEXT, dow FLOAT8, '
+        'CREATE TABLE train_flat_split_2 '
+        '(page TEXT, project TEXT, access TEXT, agent TEXT, "name" TEXT, dow FLOAT8, '
         '"month" FLOAT8, "date" TIMESTAMP, visits FLOAT8)'
     )
     pages = dao.download_from_query('SELECT DISTINCT page FROM train_flat_split')
     for index, row in pages.iterrows():
         name, project, access, agent = row['page'].rsplit('_', 3)
-        views = get_views(project, access, agent, name.encode('UTF-8'), '2017-01-01', '2017-09-01')
+        views = get_views(project, access, agent, name.encode('utf-8'), '2017-01-01', '2017-09-01')
         views['page'] = row['page']
         views['project'] = project
         views['access'] = access
