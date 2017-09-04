@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 """
 Functions to evaluate forecast accuracy
 SMAPE: https://en.wikipedia.org/wiki/Symmetric_mean_absolute_percentage_error

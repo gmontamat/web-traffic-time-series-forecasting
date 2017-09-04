@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 """
 fbprophet's forecast
 """

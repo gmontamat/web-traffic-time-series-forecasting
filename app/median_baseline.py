@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 """
 Use median as prediction
 Source: https://www.kaggle.com/clustifier/weekend-weekdays/code

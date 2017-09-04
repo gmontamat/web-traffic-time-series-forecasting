@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 """
 Functions to load input files into memory or a database system
 """
