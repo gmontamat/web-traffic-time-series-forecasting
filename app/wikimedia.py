@@ -74,12 +74,14 @@ def build_train(min_date='2017-01-01', max_date='2017-09-01'):
     bar = progressbar.ProgressBar()
     for page in bar(pages['Page'].tolist()):
         name, project, access, agent = page.rsplit('_', 3)
-        while True:
+        trials = 0
+        while trials < 10:
             try:
                 views = get_views(project, access, agent, name.encode('utf-8'), min_date, max_date, flatten=False)
                 break
             except RuntimeError:
-                print 'Error: {}'.format(page)
+                trials += 1
+                print 'Error: {}'.format(page.encode('utf-8'))
         views['Page'] = page
         views['project'] = project
         views['access'] = access
