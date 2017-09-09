@@ -30,7 +30,7 @@ def load_train(project, agent, min_lag, max_lag):
     dao = SimpleDao('localhost', '5432', 'postgres', 'postgres', 'kaggle-wttsf')
     columns = ', '.join(COLUMNS + ['visits_lag{}'.format(i) for i in xrange(min_lag, max_lag+1)] + [RESPONSE])
     train = dao.download_from_query(
-        "SELECT {} FROM xy2 WHERE project='{}' AND agent={}".format(
+        "SELECT {} FROM xy2 WHERE date>='2016-09-01' AND project='{}' AND agent={}".format(
             columns, project, agent
         )
     )
@@ -90,7 +90,9 @@ def predict(test, clip_negative=True, model_name='xgboost_{}'.format(TODAY)):
 def main():
     min_date = datetime.datetime.strptime('2017-09-13', '%Y-%m-%d')
     max_date = datetime.datetime.strptime('2017-11-13', '%Y-%m-%d')
-    dates = [(min_date + datetime.timedelta(days=i)).strftime('%Y-%m-%d') for i in xrange((max_date - min_date).days)]
+    dates = [
+        (min_date + datetime.timedelta(days=i)).strftime('%Y-%m-%d') for i in xrange((max_date - min_date).days + 1)
+    ]
     projects = [
         'en.wikipedia.org',
         'ja.wikipedia.org',
@@ -106,13 +108,13 @@ def main():
     for project in projects:
         for agent in agents:
             for i, date in enumerate(dates):
-                name = 'lag{}_{}_{}'.format(13+i, project, agent)
+                name = 'lag{}_{}_{}'.format(14+i, project, agent)
                 # Train model on available data
-                train = load_train(project, agent, 13+i, 13+i+1*7)
+                train = load_train(project, agent, 14+i, 14+i+1*7)
                 baseline = generate_baseline(train)
                 train_model(train.drop(INDEX_COLUMNS + [RESPONSE], axis=1), train[RESPONSE], baseline, model_name=name)
                 # Predict using trained model
-                test = load_test(date, project, agent, 13+i, 13+i+1*7)
+                test = load_test(date, project, agent, 14+i, 14+i+1*7)
                 test['visits'] = predict(test.drop(INDEX_COLUMNS, axis=1), model_name=name)
                 test.to_csv(
                     '../output/{}.csv'.format(name), columns=['page', 'date', 'visits'], index=False, encoding='utf-8'
