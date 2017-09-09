@@ -11,10 +11,9 @@ from dao import SimpleDao
 
 TRAIN_FILE = 'train_2.csv'
 # Get list of days
-min_date = datetime.datetime.strptime('2017-01-01', '%Y-%m-%d')
+min_date = datetime.datetime.strptime('2016-07-01', '%Y-%m-%d')
 max_date = datetime.datetime.strptime('2017-08-31', '%Y-%m-%d')
-# Will miss 2017-08-31 :(
-dates = [(min_date + datetime.timedelta(days=i)).strftime('%Y-%m-%d') for i in xrange((max_date - min_date).days)]
+dates = [(min_date + datetime.timedelta(days=i)).strftime('%Y-%m-%d') for i in xrange((max_date - min_date).days + 1)]
 COLUMNS = ["Page"] + dates
 
 
