@@ -30,7 +30,7 @@ def load_train(project, agent, min_lag, max_lag):
     dao = SimpleDao('localhost', '5432', 'postgres', 'postgres', 'kaggle-wttsf')
     columns = ', '.join(COLUMNS + ['visits_lag{}'.format(i) for i in xrange(min_lag, max_lag+1)] + [RESPONSE])
     train = dao.download_from_query(
-        "SELECT {} FROM xy WHERE date >= '2016-01-01' AND date < '2017-01-01' AND project='{}' AND agent={}".format(
+        "SELECT {} FROM xy2 WHERE project='{}' AND agent={}".format(
             columns, project, agent
         )
     )
@@ -65,13 +65,13 @@ def train_model(features, response, baseline=None, model_name='xgboost_{}'.forma
     xgb.save_model('../models')
 
 
-def load_test(project, agent, min_lag, max_lag):
+def load_test(date, project, agent, min_lag, max_lag):
     # Get table with test features
     dao = SimpleDao('localhost', '5432', 'postgres', 'postgres', 'kaggle-wttsf')
     columns = ', '.join(COLUMNS + ['visits_lag{}'.format(i) for i in xrange(min_lag, max_lag + 1)])
     test = dao.download_from_query(
-        "SELECT {} FROM testx WHERE date >= '2017-01-01' AND date <= '2017-03-01' AND project='{}' AND agent={}".format(
-            columns, project, agent
+        "SELECT {} FROM testx2 WHERE date='{}' AND project='{}' AND agent={}".format(
+            columns, date, project, agent
         )
     )
     return test
@@ -87,17 +87,36 @@ def predict(test, clip_negative=True, model_name='xgboost_{}'.format(TODAY)):
     return forecast
 
 
-def save_results(test, model_name='{}'.format(TODAY)):
-    dao = SimpleDao('localhost', '5432', 'postgres', 'postgres', 'kaggle-wttsf', 'public')
-    dao.upload_from_dataframe(test[INDEX_COLUMNS + [RESPONSE]], 'forecast_{}'.format(model_name))
-
-
 def main():
-    # Lag 12
-    name = 'lag12_en.wikipedia.org_all-0'
-    train = load_train('en.wikipedia.org', 0, 12, 12+1*7)
-    baseline = generate_baseline(train)
-    train_model(train.drop(INDEX_COLUMNS + [RESPONSE], axis=1), train[RESPONSE], baseline, model_name=name)
+    min_date = datetime.datetime.strptime('2017-09-13', '%Y-%m-%d')
+    max_date = datetime.datetime.strptime('2017-11-13', '%Y-%m-%d')
+    dates = [(min_date + datetime.timedelta(days=i)).strftime('%Y-%m-%d') for i in xrange((max_date - min_date).days)]
+    projects = [
+        'en.wikipedia.org',
+        'ja.wikipedia.org',
+        'de.wikipedia.org',
+        'fr.wikipedia.org',
+        'zh.wikipedia.org',
+        'ru.wikipedia.org',
+        'es.wikipedia.org',
+        'commons.wikimedia.org',
+        'www.mediawiki.org'
+    ]
+    agents = [0, 1]
+    for project in projects:
+        for agent in agents:
+            for i, date in enumerate(dates):
+                name = 'lag{}_{}_{}'.format(13+i, project, agent)
+                # Train model on available data
+                train = load_train(project, agent, 13+i, 13+i+1*7)
+                baseline = generate_baseline(train)
+                train_model(train.drop(INDEX_COLUMNS + [RESPONSE], axis=1), train[RESPONSE], baseline, model_name=name)
+                # Predict using trained model
+                test = load_test(date, project, agent, 13+i, 13+i+1*7)
+                test['visits'] = predict(test.drop(INDEX_COLUMNS, axis=1), model_name=name)
+                test.to_csv(
+                    '../output/{}.csv'.format(name), columns=['page', 'date', 'visits'], index=False, encoding='utf-8'
+                )
 
 
 if __name__ == '__main__':
