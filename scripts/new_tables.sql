@@ -21,7 +21,7 @@ CREATE TABLE train2_flat_split AS (
 );
 
 ALTER TABLE train2_flat_split
-  ADD PRIMARY KEY (page, date);
+  ADD PRIMARY KEY (page, "date");
 CREATE INDEX ON train2_flat_split ("date");
 CREATE INDEX ON train2_flat_split (page);
 CREATE INDEX ON train2_flat_split (project);
@@ -141,7 +141,7 @@ CREATE TABLE xy2 AS (
 );
 
 ALTER TABLE xy2
-  ADD PRIMARY KEY (page, date);
+  ADD PRIMARY KEY (page, "date");
 CREATE INDEX ON xy2 ("date");
 CREATE INDEX ON xy2 (page);
 CREATE INDEX ON xy2 (project);
