@@ -9,7 +9,7 @@ matplotlib==2.0.2
 numpy==1.13.1
 pandas==0.20.3
 progressbar2==3.30.2
-psycopg2==2.7.3
+psycopg2==2.7.3.1
 pyparsing==2.2.0
 pystan==2.16.0.0
 python-dateutil==2.6.1
