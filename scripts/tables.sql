@@ -248,11 +248,11 @@ CREATE TABLE testx AS (
             xy.visits_lag78 AS visits_lag90,
             xy.visits_lag79 AS visits_lag91
        FROM (SELECT page, dates.date FROM (SELECT DISTINCT page FROM train_flat_split) a, dates) pages
-  LEFT JOIN xy ON xy.page=pages.page AND xy.date=pages.date-12
+  LEFT JOIN xy ON xy.page=pages.page AND xy.date=pages.date - INTERVAL '12' day
 );
 
 ALTER TABLE testx
-  ADD PRIMARY KEY (page, date);
+  ADD PRIMARY KEY (page, "date");
 CREATE INDEX ON testx ("date");
 CREATE INDEX ON testx (page);
 CREATE INDEX ON testx (project);
