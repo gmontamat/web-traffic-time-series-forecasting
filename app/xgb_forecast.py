@@ -30,7 +30,7 @@ def load_train(project, agent, min_lag, max_lag):
     dao = SimpleDao('localhost', '5432', 'postgres', 'postgres', 'kaggle-wttsf')
     columns = ', '.join(COLUMNS + ['visits_lag{}'.format(i) for i in xrange(min_lag, max_lag+1)] + [RESPONSE])
     train = dao.download_from_query(
-        "SELECT {} FROM xy WHERE date>='2017-09-01' AND project='{}' AND agent={}".format(
+        "SELECT {} FROM xy WHERE date>='2016-09-01' AND project='{}' AND agent={}".format(
             columns, project, agent
         )
     )
@@ -88,7 +88,7 @@ def predict(test, clip_negative=True, model_name='xgboost_{}'.format(TODAY)):
 
 
 def main():
-    lag_min = 13
+    lag_min = 14
     lag_days = 7
     min_date = datetime.datetime.strptime('2017-09-13', '%Y-%m-%d')
     max_date = datetime.datetime.strptime('2017-11-13', '%Y-%m-%d')
