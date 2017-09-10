@@ -30,7 +30,7 @@ def load_train(project, agent, min_lag, max_lag):
     dao = SimpleDao('localhost', '5432', 'postgres', 'postgres', 'kaggle-wttsf')
     columns = ', '.join(COLUMNS + ['visits_lag{}'.format(i) for i in xrange(min_lag, max_lag+1)] + [RESPONSE])
     train = dao.download_from_query(
-        "SELECT {} FROM xy WHERE date>='2016-09-01' AND project='{}' AND agent={}".format(
+        "SELECT {} FROM xy2 WHERE date>='2016-09-01' AND project='{}' AND agent={}".format(
             columns, project, agent
         )
     )
