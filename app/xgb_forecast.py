@@ -115,12 +115,14 @@ def main():
                 train = load_train(project, agent, lag_min+i, lag_min+i+lag_days)
                 baseline = generate_baseline(train)
                 train_model(train.drop(INDEX_COLUMNS + [RESPONSE], axis=1), train[RESPONSE], baseline, model_name=name)
+                train = None  # Give the garbage collector a hand
                 # Predict using trained model
                 test = load_test(date, project, agent, lag_min+i, lag_min+i+lag_days)
                 test['visits'] = predict(test.drop(INDEX_COLUMNS, axis=1), model_name=name)
                 test.to_csv(
                     '../output/{}.csv'.format(name), columns=['page', 'date', 'visits'], index=False, encoding='utf-8'
                 )
+                test = None  # Give the garbage collector a hand
 
 
 if __name__ == '__main__':
