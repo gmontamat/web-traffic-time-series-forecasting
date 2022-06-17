@@ -6,7 +6,7 @@ fbprophet==0.1.1
 functools32==3.2.3.post2
 idna==2.5
 matplotlib==2.0.2
-numpy==1.13.1
+numpy==1.21.0
 pandas==0.20.3
 progressbar2==3.30.2
 psycopg2==2.7.3.1
